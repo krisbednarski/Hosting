@@ -254,6 +254,9 @@ namespace Microsoft.AspNetCore.Hosting
             services.AddOptions();
             services.AddLogging();
 
+            // Bind WebHostRunOptions
+            services.Configure<WebHostRunOptions>(options => configuration.Bind(options));
+
             // Conjure up a RequestServices
             services.AddTransient<IStartupFilter, AutoRequestServicesStartupFilter>();
             services.AddTransient<IServiceProviderFactory<IServiceCollection>, DefaultServiceProviderFactory>();
