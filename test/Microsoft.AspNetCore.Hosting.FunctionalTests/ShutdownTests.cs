@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Server.IntegrationTesting;
 using Microsoft.AspNetCore.Testing;
@@ -16,12 +15,7 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
 {
     public class ShutdownTests : LoggedTest
     {
-        private static readonly Regex NowListeningRegex = new Regex(@"^\s*Now listening on: (?<url>.*)$");
-        private const string ApplicationStartedMessage = "Application started. Press Ctrl+C to shut down.";
-
-        public ShutdownTests(ITestOutputHelper output) : base(output)
-        {
-        }
+        public ShutdownTests(ITestOutputHelper output) : base(output) { }
 
         [ConditionalFact]
         [OSSkipCondition(OperatingSystems.Windows)]
@@ -44,7 +38,8 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                     EnvironmentName = "Shutdown",
                     TargetFramework = "netcoreapp2.0",
                     ApplicationType = ApplicationType.Portable,
-                    PublishApplicationBeforeDeployment = true
+                    PublishApplicationBeforeDeployment = true,
+                    StatusMessagesEnabled = false
                 };
 
                 deploymentParameters.EnvironmentVariables["ASPNETCORE_STARTMECHANIC"] = "Run";
@@ -54,15 +49,7 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                     await deployer.DeployAsync();
 
                     string output = string.Empty;
-                    deployer.HostProcess.OutputDataReceived += (sender, args) =>
-                    {
-                        if (!string.Equals(args.Data, ApplicationStartedMessage)
-                            && !string.IsNullOrEmpty(args.Data)
-                            && !NowListeningRegex.Match(args.Data).Success)
-                        {
-                            output += args.Data + '\n';
-                        }
-                    };
+                    deployer.HostProcess.OutputDataReceived += (sender, args) => output += args.Data + '\n';
 
                     SendSIGINT(deployer.HostProcess.Id);
 
