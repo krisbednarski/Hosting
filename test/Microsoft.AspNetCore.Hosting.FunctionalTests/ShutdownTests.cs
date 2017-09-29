@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Server.IntegrationTesting;
 using Microsoft.AspNetCore.Testing;
@@ -15,6 +16,8 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
 {
     public class ShutdownTests : LoggedTest
     {
+        private static readonly string StartedMessage = "Started";
+
         public ShutdownTests(ITestOutputHelper output) : base(output) { }
 
         [ConditionalFact]
@@ -48,8 +51,22 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                 {
                     await deployer.DeployAsync();
 
-                    string output = string.Empty;
-                    deployer.HostProcess.OutputDataReceived += (sender, args) => output += args.Data + '\n';
+                    var mre = new ManualResetEventSlim();
+                    var output = string.Empty;
+                    deployer.HostProcess.OutputDataReceived += (sender, args) =>
+                    {
+                        if (!string.IsNullOrEmpty(args.Data) && args.Data.StartsWith(StartedMessage))
+                        {
+                            mre.Set();
+                            output += args.Data.Substring(StartedMessage.Length);
+                        }
+                        else
+                        {
+                            output += args.Data + '\n';
+                        }
+                    };
+
+                    mre.Wait(50000);
 
                     SendSIGINT(deployer.HostProcess.Id);
 
@@ -57,8 +74,7 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
 
                     output = output.Trim('\n');
 
-                    Assert.Equal("Application is shutting down...\n" +
-                                    "Stopping firing\n" +
+                    Assert.Equal("Stopping firing\n" +
                                     "Stopping end\n" +
                                     "Stopped firing\n" +
                                     "Stopped end",
@@ -88,7 +104,8 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                     EnvironmentName = "Shutdown",
                     TargetFramework = "netcoreapp2.0",
                     ApplicationType = ApplicationType.Portable,
-                    PublishApplicationBeforeDeployment = true
+                    PublishApplicationBeforeDeployment = true,
+                    StatusMessagesEnabled = false
                 };
 
                 deploymentParameters.EnvironmentVariables["ASPNETCORE_STARTMECHANIC"] = "WaitForShutdown";
@@ -97,8 +114,22 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                 {
                     await deployer.DeployAsync();
 
-                    string output = string.Empty;
-                    deployer.HostProcess.OutputDataReceived += (sender, args) => output += args.Data + '\n';
+                    var mre = new ManualResetEventSlim();
+                    var output = string.Empty;
+                    deployer.HostProcess.OutputDataReceived += (sender, args) =>
+                    {
+                        if (!string.IsNullOrEmpty(args.Data) && args.Data.StartsWith(StartedMessage))
+                        {
+                            mre.Set();
+                            output += args.Data.Substring(StartedMessage.Length);
+                        }
+                        else
+                        {
+                            output += args.Data + '\n';
+                        }
+                    };
+
+                    mre.Wait(50000);
 
                     SendSIGINT(deployer.HostProcess.Id);
 
