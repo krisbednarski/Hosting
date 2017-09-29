@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Testing.xunit;
 using Microsoft.Extensions.Logging.Testing;
 using Xunit;
 using Xunit.Abstractions;
+using System;
 
 namespace Microsoft.AspNetCore.Hosting.FunctionalTests
 {
@@ -90,6 +91,11 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                     };
 
                     started.Wait(50000);
+
+                    if (!started.IsSet)
+                    {
+                        throw new InvalidOperationException("Application did not start successfully");
+                    }
 
                     SendSIGINT(deployer.HostProcess.Id);
 
