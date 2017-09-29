@@ -155,7 +155,7 @@ namespace Microsoft.AspNetCore.Hosting
             var hostingServices = BuildCommonServices(out var hostingStartupErrors);
             var applicationServices = hostingServices.Clone();
             var hostingServiceProvider = hostingServices.BuildServiceProvider();
-            
+
             if (_options.WriteStatusMessages)
             {
                 // Warn about deprecated environment variables
@@ -265,7 +265,6 @@ namespace Microsoft.AspNetCore.Hosting
             services.AddScoped<IMiddlewareFactory, MiddlewareFactory>();
             services.AddOptions();
             services.AddLogging();
-
 
             // Conjure up a RequestServices
             services.AddTransient<IStartupFilter, AutoRequestServicesStartupFilter>();
