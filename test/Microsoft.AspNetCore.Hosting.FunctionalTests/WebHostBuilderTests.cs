@@ -61,7 +61,7 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                         }
                     };
 
-                    mre.Wait(20000);
+                    mre.Wait();
 
                     output = output.Trim('\n');
 
