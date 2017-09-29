@@ -173,12 +173,13 @@ namespace Microsoft.AspNetCore.Hosting
                 {
                     Console.WriteLine("The environment variable 'ASPNETCORE_SERVER.URLS' is obsolete and has been replaced with 'ASPNETCORE_URLS'");
                 }
+            }
 
-                // Warn about duplicate HostingStartupAssemblies
-                foreach (var assemblyName in _options.HostingStartupAssemblies.GroupBy(a => a, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
-                {
-                    Console.WriteLine($"The assembly {assemblyName} was specified multiple times. Hosting startup assemblies should only be specified once.");
-                }
+            var logger = hostingServiceProvider.GetRequiredService<ILogger<WebHost>>();
+            // Warn about duplicate HostingStartupAssemblies
+            foreach (var assemblyName in _options.HostingStartupAssemblies.GroupBy(a => a, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
+            {
+                logger.LogWarning($"The assembly {assemblyName} was specified multiple times. Hosting startup assemblies should only be specified once.");
             }
 
             AddApplicationServices(applicationServices, hostingServiceProvider);
