@@ -29,66 +29,7 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
         [OSSkipCondition(OperatingSystems.MacOSX)]
         public async Task ShutdownTestRun()
         {
-            using (StartLog(out var loggerFactory))
-            {
-                var logger = loggerFactory.CreateLogger(nameof(ShutdownTestRun));
-
-                var applicationPath = Path.Combine(TestPathUtilities.GetSolutionRootDirectory("Hosting"), "test", "TestAssets",
-                    "Microsoft.AspNetCore.Hosting.TestSites");
-
-                var deploymentParameters = new DeploymentParameters(
-                    applicationPath,
-                    ServerType.Kestrel,
-                    RuntimeFlavor.CoreClr,
-                    RuntimeArchitecture.x64)
-                {
-                    EnvironmentName = "Shutdown",
-                    TargetFramework = "netcoreapp2.0",
-                    ApplicationType = ApplicationType.Portable,
-                    PublishApplicationBeforeDeployment = true,
-                    StatusMessagesEnabled = false
-                };
-
-                deploymentParameters.EnvironmentVariables["ASPNETCORE_STARTMECHANIC"] = "Run";
-
-                using (var deployer = new SelfHostDeployer(deploymentParameters, loggerFactory))
-                {
-                    await deployer.DeployAsync();
-
-                    var started = new ManualResetEventSlim();
-                    var completed = new ManualResetEventSlim();
-                    var output = string.Empty;
-                    deployer.HostProcess.OutputDataReceived += (sender, args) =>
-                    {
-                        if (!string.IsNullOrEmpty(args.Data) && args.Data.StartsWith(StartedMessage))
-                        {
-                            started.Set();
-                            output += args.Data.Substring(StartedMessage.Length) + '\n';
-                        }
-                        else
-                        {
-                            output += args.Data + '\n';
-                        }
-
-                        if (output.Contains(CompletionMessage))
-                        {
-                            completed.Set();
-                        }
-                    };
-
-                    started.Wait(50000);
-
-                    SendSIGINT(deployer.HostProcess.Id);
-
-                    WaitForExitOrKill(deployer.HostProcess);
-
-                    completed.Wait(50000);
-
-                    output = output.Trim('\n');
-
-                    Assert.Equal(CompletionMessage, output);
-                }
-            }
+            await ExecuteShutdownTest(nameof(ShutdownTestRun), "Run");
         }
 
         [ConditionalFact]
@@ -96,9 +37,14 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
         [OSSkipCondition(OperatingSystems.MacOSX)]
         public async Task ShutdownTestWaitForShutdown()
         {
+            await ExecuteShutdownTest(nameof(ShutdownTestWaitForShutdown), "WaitForShutdown");
+        }
+
+        private async Task ExecuteShutdownTest(string testName, string shutdownMechanic)
+        {
             using (StartLog(out var loggerFactory))
             {
-                var logger = loggerFactory.CreateLogger(nameof(ShutdownTestWaitForShutdown));
+                var logger = loggerFactory.CreateLogger(testName);
 
                 var applicationPath = Path.Combine(TestPathUtilities.GetSolutionRootDirectory("Hosting"), "test", "TestAssets",
                     "Microsoft.AspNetCore.Hosting.TestSites");
@@ -116,7 +62,7 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                     StatusMessagesEnabled = false
                 };
 
-                deploymentParameters.EnvironmentVariables["ASPNETCORE_STARTMECHANIC"] = "WaitForShutdown";
+                deploymentParameters.EnvironmentVariables["ASPNETCORE_STARTMECHANIC"] = shutdownMechanic;
 
                 using (var deployer = new SelfHostDeployer(deploymentParameters, loggerFactory))
                 {
