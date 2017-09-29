@@ -160,7 +160,7 @@ namespace Microsoft.AspNetCore.Hosting
         }
 
         /// <summary>
-        /// TODO:
+        /// Specify if startup status messages should be written to console.
         /// </summary>
         /// <param name="hostBuilder">The <see cref="IWebHostBuilder"/> to configure.</param>
         /// <param name="writeStatusMessages"><c>true</c> to enable writing of hosting startup status messages; otherwise <c>false</c>.</param>

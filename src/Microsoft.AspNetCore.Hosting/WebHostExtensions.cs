@@ -77,7 +77,8 @@ namespace Microsoft.AspNetCore.Hosting
             var done = new ManualResetEventSlim(false);
             using (var cts = new CancellationTokenSource())
             {
-                AttachCtrlcSigtermShutdown(cts, done, shutdownMessage: host.Services.GetService<WebHostOptions>().WriteStatusMessages ? "Application is shutting down..." : string.Empty);
+                var shutdownMessage = host.Services.GetRequiredService<WebHostOptions>().WriteStatusMessages ? "Application is shutting down..." : string.Empty;
+                AttachCtrlcSigtermShutdown(cts, done, shutdownMessage: shutdownMessage);
 
                 await host.RunAsync(cts.Token, "Application started. Press Ctrl+C to shut down.");
                 done.Set();
@@ -92,7 +93,7 @@ namespace Microsoft.AspNetCore.Hosting
 
                 var hostingEnvironment = host.Services.GetService<IHostingEnvironment>();
                 var applicationLifetime = host.Services.GetService<IApplicationLifetime>();
-                var options = host.Services.GetService<WebHostOptions>();
+                var options = host.Services.GetRequiredService<WebHostOptions>();
 
                 if (options.WriteStatusMessages)
                 {
