@@ -17,6 +17,10 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
     public class ShutdownTests : LoggedTest
     {
         private static readonly string StartedMessage = "Started";
+        private static readonly string CompletionMessage = "Stopping firing\n" +
+                                                            "Stopping end\n" +
+                                                            "Stopped firing\n" +
+                                                            "Stopped end";
 
         public ShutdownTests(ITestOutputHelper output) : base(output) { }
 
@@ -51,34 +55,38 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                 {
                     await deployer.DeployAsync();
 
-                    var mre = new ManualResetEventSlim();
+                    var started = new ManualResetEventSlim();
+                    var completed = new ManualResetEventSlim();
                     var output = string.Empty;
                     deployer.HostProcess.OutputDataReceived += (sender, args) =>
                     {
                         if (!string.IsNullOrEmpty(args.Data) && args.Data.StartsWith(StartedMessage))
                         {
-                            mre.Set();
-                            output += args.Data.Substring(StartedMessage.Length);
+                            started.Set();
+                            output += args.Data.Substring(StartedMessage.Length) + '\n';
                         }
                         else
                         {
                             output += args.Data + '\n';
                         }
+
+                        if (output.Contains(CompletionMessage))
+                        {
+                            completed.Set();
+                        }
                     };
 
-                    mre.Wait(50000);
+                    started.Wait(50000);
 
                     SendSIGINT(deployer.HostProcess.Id);
 
                     WaitForExitOrKill(deployer.HostProcess);
 
+                    completed.Wait(50000);
+
                     output = output.Trim('\n');
 
-                    Assert.Equal("Stopping firing\n" +
-                                    "Stopping end\n" +
-                                    "Stopped firing\n" +
-                                    "Stopped end",
-                                    output);
+                    Assert.Equal(CompletionMessage, output);
                 }
             }
         }
@@ -114,34 +122,38 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                 {
                     await deployer.DeployAsync();
 
-                    var mre = new ManualResetEventSlim();
+                    var started = new ManualResetEventSlim();
+                    var completed = new ManualResetEventSlim();
                     var output = string.Empty;
                     deployer.HostProcess.OutputDataReceived += (sender, args) =>
                     {
                         if (!string.IsNullOrEmpty(args.Data) && args.Data.StartsWith(StartedMessage))
                         {
-                            mre.Set();
-                            output += args.Data.Substring(StartedMessage.Length);
+                            started.Set();
+                            output += args.Data.Substring(StartedMessage.Length) + '\n';
                         }
                         else
                         {
                             output += args.Data + '\n';
                         }
+
+                        if (output.Contains(CompletionMessage))
+                        {
+                            completed.Set();
+                        }
                     };
 
-                    mre.Wait(50000);
+                    started.Wait(50000);
 
                     SendSIGINT(deployer.HostProcess.Id);
 
                     WaitForExitOrKill(deployer.HostProcess);
 
+                    completed.Wait(50000);
+
                     output = output.Trim('\n');
 
-                    Assert.Equal("Stopping firing\n" +
-                                    "Stopping end\n" +
-                                    "Stopped firing\n" +
-                                    "Stopped end",
-                                    output);
+                    Assert.Equal(CompletionMessage, output);
                 }
             }
         }
