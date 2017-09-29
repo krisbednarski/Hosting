@@ -156,7 +156,7 @@ namespace Microsoft.AspNetCore.Hosting
             var applicationServices = hostingServices.Clone();
             var hostingServiceProvider = hostingServices.BuildServiceProvider();
             
-            if (hostingServiceProvider.GetService<IOptions<WebHostRunOptions>>().Value.WriteStatusMessages)
+            if (_options.WriteStatusMessages)
             {
                 // Warn about deprecated environment variables
                 if (Environment.GetEnvironmentVariable("Hosting:Environment") != null)
@@ -238,6 +238,7 @@ namespace Microsoft.AspNetCore.Hosting
             _context.HostingEnvironment = _hostingEnvironment;
 
             var services = new ServiceCollection();
+            services.AddSingleton(_options);
             services.AddSingleton(_hostingEnvironment);
             services.AddSingleton(_context);
 
@@ -264,8 +265,6 @@ namespace Microsoft.AspNetCore.Hosting
             services.AddOptions();
             services.AddLogging();
 
-            // Bind WebHostRunOptions
-            services.Configure<WebHostRunOptions>(options => configuration.Bind(options));
 
             // Conjure up a RequestServices
             services.AddTransient<IStartupFilter, AutoRequestServicesStartupFilter>();

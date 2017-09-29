@@ -30,6 +30,7 @@ namespace Microsoft.AspNetCore.Hosting.Internal
             WebRoot = configuration[WebHostDefaults.WebRootKey];
             ContentRootPath = configuration[WebHostDefaults.ContentRootKey];
             PreventHostingStartup = WebHostUtilities.ParseBool(configuration, WebHostDefaults.PreventHostingStartupKey);
+            WriteStatusMessages = WebHostUtilities.ParseBool(configuration, WebHostDefaults.WriteStatusMessages);
             // Search the primary assembly and configured assemblies.
             HostingStartupAssemblies = $"{ApplicationName};{configuration[WebHostDefaults.HostingStartupAssembliesKey]}"
                 .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
@@ -45,6 +46,8 @@ namespace Microsoft.AspNetCore.Hosting.Internal
         public string ApplicationName { get; set; }
 
         public bool PreventHostingStartup { get; set; }
+
+        public bool WriteStatusMessages { get; set; }
 
         public IReadOnlyList<string> HostingStartupAssemblies { get; set; }
 
